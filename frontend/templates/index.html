@@ -78,7 +78,7 @@
             </p>
 
             <!-- Кнопка перехода в бота ВК -->
-            <a id="vk-bot-link" href="https://vk.com" target="_blank" class="btn btn-primary w-100 mb-3">
+            <a id="vk-bot-link" href="https://vk.ru/write-{{ vk_id }}" target="_blank" class="btn btn-primary w-100 mb-3">
                 Открыть бота ВКонтакте
             </a>
 
@@ -140,7 +140,7 @@
             // Персональная ссылка на бота ВК с передачей email в параметр ref
             const botLink = document.getElementById('vk-bot-link');
             if (VK_GROUP_ID && email) {
-                botLink.href = `https://vk.me/club${VK_GROUP_ID}?ref=${encodeURIComponent(email)}`;
+                botLink.href = `https://vk.ru/write-${VK_GROUP_ID}?ref=${encodeURIComponent(email)}&ref_source=`;
             }
 
             showSection('dashboard');
