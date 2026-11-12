@@ -39,32 +39,61 @@ def vk_callback(request):
         confirmation_code = os.getenv("VK_CONFIRMATION_CODE", "")
         return HttpResponse(confirmation_code, content_type="text/plain")
 
-    # 2. Обработка входящего сообщения и привязки по ссылке с сайта
+        # 2. Обработка входящего сообщения и привязки аккаунта
     if data.get("type") == "message_new":
         message = data.get("object", {}).get("message", {})
         vk_user_id = str(message.get("from_id", ""))
-        ref_email = message.get("ref")  # Сюда ВК передаст email из параметра ?ref=
+        text = message.get("text", "").strip()
+
+        # Пробуем взять email из метки ?ref= или из текста сообщения (если пользователь прислал свой email)
+        ref_email = message.get("ref") or (text if "@" in text else None)
+
+        vk_token = os.getenv("VK_BOT_TOKEN")
 
         if ref_email and vk_user_id:
-            user = User.objects.filter(email=ref_email).first()
+            user = User.objects.filter(email__iexact=ref_email).first()
             if user:
                 user.vk_user_id = vk_user_id
                 user.save()
 
-                # Отправляем тестовое сообщение пользователю
-                vk_token = os.getenv("VK_BOT_TOKEN")
                 if vk_token:
                     requests.post(
                         "https://vk.com",
                         data={
                             "user_id": vk_user_id,
-                            "message": f"Аккаунт {ref_email} успешно привязан! Тестовое уведомление работает.",
-                            "random_id": random.randint(1, 2**31),
+                            "message": f"Аккаунт {user.email} успешно привязан! Тестовое уведомление работает.",
+                            "random_id": random.randint(1, 2 ** 31),
                             "access_token": vk_token,
                             "v": "5.199",
                         },
                         timeout=5,
                     )
+            elif vk_token:
+                # Если email не найден в базе — подсказываем пользователю
+                requests.post(
+                    "https://vk.com",
+                    data={
+                        "user_id": vk_user_id,
+                        "message": f"Пользователь с email {ref_email} не найден на сайте. Проверьте адрес и отправьте его снова.",
+                        "random_id": random.randint(1, 2 ** 31),
+                        "access_token": vk_token,
+                        "v": "5.199",
+                    },
+                    timeout=5,
+                )
+        elif vk_user_id and vk_token:
+            # Если пришло обычное сообщение без ref (например, повторное "Начать")
+            requests.post(
+                "https://vk.com",
+                data={
+                    "user_id": vk_user_id,
+                    "message": "Привет! Чтобы привязать аккаунт, перейдите по кнопке из личного кабинета на сайте или просто отправьте сюда свой email, указанный при регистрации.",
+                    "random_id": random.randint(1, 2 ** 31),
+                    "access_token": vk_token,
+                    "v": "5.199",
+                },
+                timeout=5,
+        )
 
     # 3. Для всех остальных событий пока просто отвечаем "ok"
     return HttpResponse("ok", content_type="text/plain")
