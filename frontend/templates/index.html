@@ -140,7 +140,8 @@
             // Персональная ссылка на бота ВК с передачей email в параметр ref
             const botLink = document.getElementById('vk-bot-link');
             if (VK_GROUP_ID && email) {
-                botLink.href = `https://vk.me{VK_GROUP_ID}?ref=${encodeURIComponent(email)}`;
+                botLink.href = `https://vk
+                .me/club{{VK_GROUP_ID}}?ref=${encodeURIComponent(email)}`;
             }
 
             showSection('dashboard');
