@@ -1,0 +1,136 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, feature/docker-ci-cd ]
+  pull_request:
+    branches: [ main, develop, feature/docker-ci-cd ]
+
+
+jobs:
+  # 1. Этап ТЕСТЫ
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run tests
+        env:
+          SECRET_KEY: 'test_secret_key_for_ci_pipeline'
+          DEBUG: 'True'
+          DB_NAME: 'test_db'
+        run: |
+          python manage.py test
+
+  # 2. Этап ЛИНТЕР (запускается после успешных тестов)
+  lint:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install linter
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+
+      - name: Run Flake8 linter
+        run: flake8 . --max-line-length=120 --exclude=venv,.venv,migrations
+
+  # 3. Этап ПРОВЕРКА СБОРКИ DOCKER (работает и при push, и при Pull Request)
+  build:
+    runs-on: ubuntu-latest
+    needs: [ test, lint ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t habit_tracker:test .
+
+  # 4. Этап АВТО-ДЕПЛОЙ НА СЕРВЕР (работает только при push)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+    steps:
+      - name: Deploy to Remote Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Переходим в рабочую папку проекта на сервере
+            mkdir -p /home/ubuntu/habit_tracker
+            cd /home/ubuntu/habit_tracker
+
+            # Если проекта еще нет на сервере — клонируем с точкой, если есть — подтягиваем изменения
+            if [ ! -d ".git" ]; then
+              rm -f .env
+              git clone https://github.com/LeeParker1603/habit_tracker .
+              git checkout feature/docker-ci-cd
+            else
+              git fetch --all
+              git checkout feature/docker-ci-cd
+              git reset --hard origin/feature/docker-ci-cd
+            fi
+
+            # Автоматическое формирование .env файла из GitHub Secrets на сервере
+            cat << 'EOF' > .env
+            SECRET_KEY='${{ secrets.SECRET_KEY }}'
+            DEBUG=False
+            ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+            CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}
+
+            # Подключение к PostgreSQL контейнеру
+            HOST=db
+            PORT=5432
+            NAME=${{ secrets.NAME }}
+            USER=${{ secrets.USER }}
+            PASSWORD=${{ secrets.PASSWORD }}
+
+            # Настройки для инициализации самого контейнера базы данных PostgreSQL
+            POSTGRES_DB=${{ secrets.NAME }}
+            POSTGRES_USER=${{ secrets.USER }}
+            POSTGRES_PASSWORD=${{ secrets.PASSWORD }}
+
+            # Настройки брокера Redis и Celery
+            CELERY_BROKER_URL=redis://redis:6379/0
+            CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+            # Настройки Телеграм
+            TELEGRAM_PROXY=${{ secrets.TELEGRAM_PROXY }}
+            TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+            EOF
+
+            # Перезапуск Docker-контейнеров одной командой с очисткой старых анонимных томов
+            docker compose down
+            docker compose up -d --build
+
+            echo "Ожидание запуска базы данных..."
+            for i in {1..30}; do
+              if docker compose exec -T db pg_isready -U "${{ secrets.USER }}" -d "${{ secrets.NAME }}"; then
+                echo "База данных готова к работе!"
+                break
+              fi
+              echo "База данных еще инициализируется, ждем 1 секунду..."
+              sleep 1
+            done
