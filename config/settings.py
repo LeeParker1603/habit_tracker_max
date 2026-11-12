@@ -172,3 +172,4 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 60.0,  # Интервал в секундах
     },
 }
+
