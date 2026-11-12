@@ -69,7 +69,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     steps:
       - name: Deploy to Remote Server via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -86,11 +86,11 @@ jobs:
             if [ ! -d ".git" ]; then
               rm -f .env
               git clone https://github.com/LeeParker1603/habit_tracker_max .
-              git checkout main
+              git checkout develop
             else
               git fetch --all
-              git checkout main
-              git reset --hard origin/main
+              git checkout develop
+              git reset --hard origin/develop
             fi
 
             # Автоматическое формирование .env файла из GitHub Secrets на сервере
@@ -117,6 +117,9 @@ jobs:
             CELERY_RESULT_BACKEND=redis://redis:6379/0
 
             # Настройки ВК
+            VK_SECRET_KEY=${{ secrets.VK_SECRET_KEY }}
+            VK_CONFIRMATION_CODE=${{ secrets.VK_CONFIRMATION_CODE }}
+            
             VK_ID=${{ secrets.VK_ID }}
             VK_BOT_TOKEN=${{ secrets.VK_BOT_TOKEN }}
             EOF
