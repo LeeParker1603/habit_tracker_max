@@ -31,7 +31,9 @@ def send_vk_message(user_id, text):
         response.raise_for_status()
         data = response.json()
         if "error" in data:
-            print(f"Ошибка VK API при отправке пользователю {user_id}: {data['error']['error_msg']}")
+            print(
+                f"Ошибка VK API при отправке пользователю {user_id}: {data['error']['error_msg']}"
+            )
     except requests.RequestException as e:
         print(f"Ошибка сети при отправке сообщения в VK пользователю {user_id}: {e}")
 

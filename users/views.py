@@ -38,4 +38,3 @@ def vk_callback(request):
 
     # 2. Для всех остальных событий пока просто отвечаем "ok"
     return HttpResponse("ok", content_type="text/plain")
-
