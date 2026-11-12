@@ -58,7 +58,7 @@ def vk_callback(request):
 
                 if vk_token:
                     requests.post(
-                        "https://api.vk.ru",
+                        "https://api.vk.ru/method/messages.send",
                         data={
                             "user_id": vk_user_id,
                             "message": f"Аккаунт {user.email} успешно привязан! Тестовое уведомление работает.",
@@ -71,7 +71,7 @@ def vk_callback(request):
             elif vk_token:
                 # Если email не найден в базе — подсказываем пользователю
                 requests.post(
-                    "https://api.vk.ru",
+                    "https://api.vk.ru/method/messages.send",
                     data={
                         "user_id": vk_user_id,
                         "message": f"Пользователь с email {ref_email} не найден на сайте. Проверьте адрес и отправьте его снова.",
@@ -84,7 +84,7 @@ def vk_callback(request):
         elif vk_user_id and vk_token:
             # Если пришло обычное сообщение без ref (например, повторное "Начать")
             requests.post(
-                "https://api.vk.ru",
+                "https://api.vk.ru/method/messages.send",
                 data={
                     "user_id": vk_user_id,
                     "message": "Привет! Чтобы привязать аккаунт, перейдите по кнопке из личного кабинета на сайте или просто отправьте сюда свой email, указанный при регистрации.",
