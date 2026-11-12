@@ -116,9 +116,9 @@ jobs:
             CELERY_BROKER_URL=redis://redis:6379/0
             CELERY_RESULT_BACKEND=redis://redis:6379/0
 
-            # Настройки Телеграм
-            TELEGRAM_PROXY=${{ secrets.TELEGRAM_PROXY }}
-            TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+            # Настройки ВК
+            VK_ID=${{ secrets.VK_ID }}
+            VK_BOT_TOKEN=${{ secrets.VK_BOT_TOKEN }}
             EOF
 
             # Перезапуск Docker-контейнеров одной командой с очисткой старых анонимных томов
