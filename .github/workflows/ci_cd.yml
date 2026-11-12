@@ -86,11 +86,11 @@ jobs:
             if [ ! -d ".git" ]; then
               rm -f .env
               git clone https://github.com/LeeParker1603/habit_tracker_max .
-              git checkout main
+              git checkout develop
             else
               git fetch --all
-              git checkout main
-              git reset --hard origin/main
+              git checkout develop
+              git reset --hard origin/develop
             fi
 
             # Автоматическое формирование .env файла из GitHub Secrets на сервере
