@@ -1,11 +1,14 @@
 import json
 import os
+import random
 
+import requests
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny
 
+from users.models import User
 from users.serializers import UserRegisterSerializer
 
 
@@ -36,5 +39,32 @@ def vk_callback(request):
         confirmation_code = os.getenv("VK_CONFIRMATION_CODE", "")
         return HttpResponse(confirmation_code, content_type="text/plain")
 
-    # 2. Для всех остальных событий пока просто отвечаем "ok"
+    # 2. Обработка входящего сообщения и привязки по ссылке с сайта
+    if data.get("type") == "message_new":
+        message = data.get("object", {}).get("message", {})
+        vk_user_id = str(message.get("from_id", ""))
+        ref_email = message.get("ref")  # Сюда ВК передаст email из параметра ?ref=
+
+        if ref_email and vk_user_id:
+            user = User.objects.filter(email=ref_email).first()
+            if user:
+                user.vk_user_id = vk_user_id
+                user.save()
+
+                # Отправляем тестовое сообщение пользователю
+                vk_token = os.getenv("VK_BOT_TOKEN")
+                if vk_token:
+                    requests.post(
+                        "https://vk.com",
+                        data={
+                            "user_id": vk_user_id,
+                            "message": f"Аккаунт {ref_email} успешно привязан! Тестовое уведомление работает.",
+                            "random_id": random.randint(1, 2**31),
+                            "access_token": vk_token,
+                            "v": "5.199",
+                        },
+                        timeout=5,
+                    )
+
+    # 3. Для всех остальных событий пока просто отвечаем "ok"
     return HttpResponse("ok", content_type="text/plain")

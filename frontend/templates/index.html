@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Трекер привычек</title>
+    <link href="https://jsdelivr.net" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- Верхняя панель навигации -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+        <a class="navbar-brand" href="#">Habit Tracker</a>
+
+        <!-- Кнопки входа и регистрации справа -->
+        <div class="ms-auto d-flex gap-2" id="auth-buttons">
+            <button class="btn btn-outline-light btn-sm" onclick="showSection('login')">Вход</button>
+            <button class="btn btn-primary btn-sm" onclick="showSection('register')">Регистрация</button>
+        </div>
+
+        <!-- Меню авторизованного пользователя справа -->
+        <div class="ms-auto d-none align-items-center gap-3" id="user-menu">
+            <span class="text-light small" id="user-email-display"></span>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">Выйти</button>
+        </div>
+    </nav>
+
+    <!-- Основной контейнер -->
+    <div class="container mt-5" style="max-width: 480px;">
+
+        <!-- Уведомления об ошибках и успехе -->
+        <div id="alert-box" class="alert d-none" role="alert"></div>
+
+        <!-- ЭКРАН 1: Вход (SimpleJWT) -->
+        <div id="section-login" class="card p-4 shadow-sm">
+            <h4 class="mb-3">Вход в аккаунт</h4>
+            <form id="login-form">
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="login-email" placeholder="user@example.com" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" class="form-control" id="login-password" required>
+                </div>
+                <button type="submit" class="btn btn-dark w-100">Войти</button>
+            </form>
+        </div>
+
+        <!-- ЭКРАН 2: Регистрация -->
+        <div id="section-register" class="card p-4 shadow-sm d-none">
+            <h4 class="mb-3">Регистрация</h4>
+            <form id="register-form">
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="reg-email" placeholder="user@example.com" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" class="form-control" id="reg-password" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">VK User ID (необязательно)</label>
+                    <input type="text" class="form-control" id="reg-vk-id" placeholder="Например: 123456789">
+                    <div class="form-text">Можно указать позже в личном кабинете</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Создать аккаунт</button>
+            </form>
+        </div>
+
+        <!-- ЭКРАН 3: Личный кабинет и привязка ВК -->
+        <div id="section-dashboard" class="card p-4 shadow-sm d-none">
+            <h4 class="mb-3">Уведомления ВКонтакте</h4>
+            <p class="text-muted small">
+                Чтобы получать напоминания о привычках, перейдите в диалог с нашим ботом и отправьте ему команду старта.
+            </p>
+
+            <!-- Кнопка перехода в бота ВК -->
+            <a id="vk-bot-link" href="https://vk.com" target="_blank" class="btn btn-primary w-100 mb-3">
+                Открыть бота ВКонтакте
+            </a>
+
+            <div class="p-3 bg-light border rounded">
+                <p class="mb-1 small fw-bold">Как привязать аккаунт:</p>
+                <ol class="small text-muted mb-0 ps-3">
+                    <li>Нажмите кнопку выше и напишите боту <b>Начать</b>.</li>
+                    <li>Если бот прислал ваш ID или код привязки — убедитесь, что он совпадает с указанным при регистрации.</li>
+                </ol>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const VK_GROUP_ID = "{{ vk_group_id }}";
+
+        function showSection(sectionName) {
+            document.getElementById('section-login').classList.add('d-none');
+            document.getElementById('section-register').classList.add('d-none');
+            document.getElementById('section-dashboard').classList.add('d-none');
+            hideAlert();
+
+            document.getElementById(`section-${sectionName}`).classList.remove('d-none');
+        }
+
+        function showAlert(message, type = 'danger') {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+        }
+
+        function hideAlert() {
+            document.getElementById('alert-box').classList.add('d-none');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const accessToken = localStorage.getItem('accessToken');
+            const userEmail = localStorage.getItem('userEmail');
+            if (accessToken) {
+                switchToLoggedInState(userEmail);
+            }
+        });
+
+        function switchToLoggedInState(email) {
+            document.getElementById('auth-buttons').classList.add('d-none');
+            const userMenu = document.getElementById('user-menu');
+            userMenu.classList.remove('d-none');
+            userMenu.classList.add('d-flex');
+            document.getElementById('user-email-display').textContent = email || '';
+
+            // Формируем персональную ссылку на бота ВК с передачей email в параметр ref
+            const botLink = document.getElementById('vk-bot-link');
+            if (VK_GROUP_ID && email) {
+                botLink.href = `https://vk.me{VK_GROUP_ID}?ref=${encodeURIComponent(email)}`;
+            }
+
+            showSection('dashboard');
+        }
+
+        function logout() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('userEmail');
+
+            document.getElementById('auth-buttons').classList.remove('d-none');
+            const userMenu = document.getElementById('user-menu');
+            userMenu.classList.add('d-none');
+            userMenu.classList.remove('d-flex');
+            showSection('login');
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('/api/token/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('accessToken', data.access);
+                    localStorage.setItem('refreshToken', data.refresh);
+                    localStorage.setItem('userEmail', email);
+                    switchToLoggedInState(email);
+                } else {
+                    showAlert(data.detail || 'Неверный email или пароль');
+                }
+            } catch (error) {
+                showAlert('Ошибка соединения с сервером');
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const vk_user_id = document.getElementById('reg-vk-id').value.trim();
+
+            const payload = { email, password };
+            if (vk_user_id) {
+                payload.vk_user_id = vk_user_id;
+            }
+
+            try {
+                const response = await fetch('/api/users/register/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSection('login');
+                    document.getElementById('login-email').value = email;
+                    showAlert('Аккаунт успешно создан! Теперь войдите в систему.', 'success');
+                } else {
+                    const errorMsg = Object.values(data).flat().join(' ');
+                    showAlert(errorMsg || 'Ошибка при регистрации');
+                }
+            } catch (error) {
+                showAlert('Ошибка соединения с сервером');
+            }
+        });
+    </script>
+</body>
+</html>

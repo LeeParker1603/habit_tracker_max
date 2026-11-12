@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     # Наши приложения
     "users",
     "habits",
+    "frontend",
 ]
 
 MIDDLEWARE = [
