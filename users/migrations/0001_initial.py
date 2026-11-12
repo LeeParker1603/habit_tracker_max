@@ -81,12 +81,12 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "tg_chat_id",
+                    "vk_user_id",
                     models.CharField(
                         blank=True,
                         max_length=50,
                         null=True,
-                        verbose_name="Telegram Chat ID",
+                        verbose_name="ВК Chat ID",
                     ),
                 ),
                 (

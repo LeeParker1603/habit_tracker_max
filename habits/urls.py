@@ -1,9 +1,10 @@
 from django.urls import path
+
 from habits.views import (
-    UserHabitListAPIView,
-    PublicHabitListAPIView,
     HabitCreateAPIView,
     HabitRetrieveUpdateDestroyAPIView,
+    PublicHabitListAPIView,
+    UserHabitListAPIView,
 )
 
 urlpatterns = [

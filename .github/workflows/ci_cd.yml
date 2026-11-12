@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, feature/docker-ci-cd ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop, feature/docker-ci-cd ]
+    branches: [ main, develop ]
 
 
 jobs:
@@ -63,13 +63,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t habit_tracker:test .
+        run: docker build -t habit_tracker_max:test .
 
   # 4. Этап АВТО-ДЕПЛОЙ НА СЕРВЕР (работает только при push)
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Deploy to Remote Server via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -79,18 +79,18 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Переходим в рабочую папку проекта на сервере
-            mkdir -p /home/ubuntu/habit_tracker
-            cd /home/ubuntu/habit_tracker
+            mkdir -p /home/ubuntu/habit_tracker_max
+            cd /home/ubuntu/habit_tracker_max
 
             # Если проекта еще нет на сервере — клонируем с точкой, если есть — подтягиваем изменения
             if [ ! -d ".git" ]; then
               rm -f .env
-              git clone https://github.com/LeeParker1603/habit_tracker .
-              git checkout feature/docker-ci-cd
+              git clone https://github.com/LeeParker1603/habit_tracker_max .
+              git checkout main
             else
               git fetch --all
-              git checkout feature/docker-ci-cd
-              git reset --hard origin/feature/docker-ci-cd
+              git checkout main
+              git reset --hard origin/main
             fi
 
             # Автоматическое формирование .env файла из GitHub Secrets на сервере
@@ -116,9 +116,9 @@ jobs:
             CELERY_BROKER_URL=redis://redis:6379/0
             CELERY_RESULT_BACKEND=redis://redis:6379/0
 
-            # Настройки Телеграм
-            TELEGRAM_PROXY=${{ secrets.TELEGRAM_PROXY }}
-            TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+            # Настройки ВК
+            VK_ID=${{ secrets.VK_ID }}
+            VK_BOT_TOKEN=${{ secrets.VK_BOT_TOKEN }}
             EOF
 
             # Перезапуск Docker-контейнеров одной командой с очисткой старых анонимных томов

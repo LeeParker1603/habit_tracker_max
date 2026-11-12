@@ -18,7 +18,7 @@
 1. **Клонирование репозитория:**
    ```bash
    git clone https://github.com
-   cd habit_tracker
+   cd habit_tracker_max
    ```
 2. **Настройка окружения:** создайте `.env` на основе шаблона и заполните 
    параметры базы данных, Django, Redis и MAX Bot Token.

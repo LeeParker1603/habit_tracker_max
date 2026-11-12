@@ -1,13 +1,14 @@
 from rest_framework.generics import (
-    ListAPIView,
     CreateAPIView,
+    ListAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
+
 from habits.models import Habit
-from habits.serializers import HabitSerializer
 from habits.paginators import HabitPagination
 from habits.permissions import IsOwner
+from habits.serializers import HabitSerializer
 
 
 class UserHabitListAPIView(ListAPIView):

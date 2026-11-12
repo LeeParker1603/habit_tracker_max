@@ -1,10 +1,11 @@
 import os
+
 from celery import Celery
 
 # Устанавливаем дефолтный модуль настроек Django для утилиты celery.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
-app = Celery("habit_tracker")
+app = Celery("habit_tracker_max")
 
 # Используем строку конфигурации, которая означает, что сетинги для celery
 # будут искаться в settings.py Django с префиксом CELERY_.

@@ -22,9 +22,9 @@ class User(AbstractUser):
     username = None  # Отключаем стандартное поле username
     email = models.EmailField(unique=True, verbose_name="Email")
 
-    # Поле для интеграции с Telegram-ботом
-    tg_chat_id = models.CharField(
-        max_length=50, blank=True, null=True, verbose_name="Telegram Chat ID"
+    # Поле для интеграции с ВК-ботом
+    vk_user_id = models.CharField(
+        max_length=50, blank=True, null=True, verbose_name="ВК Chat ID"
     )
 
     USERNAME_FIELD = "email"
