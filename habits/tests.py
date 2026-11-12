@@ -1,8 +1,9 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from users.models import User
+
 from habits.models import Habit
+from users.models import User
 
 
 class HabitTestCase(APITestCase):

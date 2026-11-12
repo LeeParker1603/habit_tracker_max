@@ -1,8 +1,10 @@
 import os
 import random
+from datetime import date, datetime
+
 import requests
-from datetime import datetime, date
 from celery import shared_task
+
 from habits.models import Habit
 
 VK_BOT_TOKEN = os.getenv("VK_BOT_TOKEN")
