@@ -63,7 +63,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t habit_tracker:test .
+        run: docker build -t habit_tracker_max:test .
 
   # 4. Этап АВТО-ДЕПЛОЙ НА СЕРВЕР (работает только при push)
   deploy:
