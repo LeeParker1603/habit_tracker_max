@@ -62,7 +62,7 @@ def vk_callback(request):
                         data={
                             "user_id": vk_user_id,
                             "message": f"Аккаунт {user.email} успешно привязан! Тестовое уведомление работает.",
-                            "random_id": random.randint(1, 2 ** 31),
+                            "random_id": random.randint(1, 2**31),
                             "access_token": vk_token,
                             "v": "5.199",
                         },
@@ -75,7 +75,7 @@ def vk_callback(request):
                     data={
                         "user_id": vk_user_id,
                         "message": f"Пользователь с email {ref_email} не найден на сайте. Проверьте адрес и отправьте его снова.",
-                        "random_id": random.randint(1, 2 ** 31),
+                        "random_id": random.randint(1, 2**31),
                         "access_token": vk_token,
                         "v": "5.199",
                     },
@@ -88,12 +88,12 @@ def vk_callback(request):
                 data={
                     "user_id": vk_user_id,
                     "message": "Привет! Чтобы привязать аккаунт, перейдите по кнопке из личного кабинета на сайте или просто отправьте сюда свой email, указанный при регистрации.",
-                    "random_id": random.randint(1, 2 ** 31),
+                    "random_id": random.randint(1, 2**31),
                     "access_token": vk_token,
                     "v": "5.199",
                 },
                 timeout=5,
-        )
+            )
 
     # 3. Для всех остальных событий пока просто отвечаем "ok"
     return HttpResponse("ok", content_type="text/plain")
